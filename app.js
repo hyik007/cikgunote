@@ -12,16 +12,28 @@
   const STORAGE_NOTES = 'cikgunote_notes_v1';
   const STORAGE_AUTH = 'cikgunote_unlocked_v1';
   const STORAGE_LANG = 'cikgunote_lang_v1';
+  const STORAGE_PROFILE = 'cikgunote_profile_v1';
+  const CODE_SIGN_SALT = 'CIKGU-MY-2026-DESK';
 
   const I18N = {
     en: {
       gate_sub: 'Private Notebook for Malaysian Teachers',
       gate_title: 'Welcome back, Cikgu.',
-      gate_desc: 'Enter your exclusive teacher access code to open your private RPH, PBD, and classroom notebook. All notes stay 100% private on your device.',
+      gate_desc: 'Enter your access code, or register automatically below to receive your personal code in 5 seconds.',
+      tab_unlock: 'I Have a Code',
+      tab_register: 'Get Free Code (Auto)',
       gate_label: 'Teacher Access Code',
       gate_btn: 'Unlock My Desk',
+      reg_name_label: 'Teacher Name',
+      reg_school_label: 'School / Institution',
+      reg_email_label: 'MOE / School Email (DELIMa or Gmail)',
+      reg_btn: 'Generate My Personal Code',
+      reg_ready: 'Your personal teacher code is ready:',
+      reg_save_tip: 'Save this code — you can use it anytime on any browser.',
+      copy_code: 'Copy Code',
+      enter_desk: 'Open My Desk →',
       gate_note: '100% Free · Works Offline · Private to Your Browser',
-      gate_invalid: 'Invalid access code. Please check the code given by the administrator.',
+      gate_invalid: 'Invalid access code. Please check your code or click "Get Free Code (Auto)".',
       app_sub: "Teacher's Desk",
       new_note: 'New Note',
       folders_heading: 'Folders',
@@ -46,11 +58,21 @@
     bm: {
       gate_sub: 'Buku Nota Peribadi Guru Malaysia',
       gate_title: 'Selamat kembali, Cikgu.',
-      gate_desc: 'Masukkan kod akses eksklusif guru untuk membuka nota RPH, PBD, dan kelas anda. Semua nota disimpan 100% secara peribadi di peranti anda.',
+      gate_desc: 'Masukkan kod akses anda, atau daftar secara automatik di bawah untuk dapatkan kod peribadi dalam 5 saat.',
+      tab_unlock: 'Saya Ada Kod',
+      tab_register: 'Daftar Percuma (Auto)',
       gate_label: 'Kod Akses Guru',
       gate_btn: 'Buka Meja Nota',
+      reg_name_label: 'Nama Guru',
+      reg_school_label: 'Sekolah / Institusi',
+      reg_email_label: 'Emel DELIMa / Sekolah / Gmail',
+      reg_btn: 'Jana Kod Peribadi Saya',
+      reg_ready: 'Kod akses peribadi anda sudah sedia:',
+      reg_save_tip: 'Simpan kod ini — anda boleh gunakannya di mana-mana pelayar.',
+      copy_code: 'Salin Kod',
+      enter_desk: 'Buka Meja Nota →',
       gate_note: '100% Percuma · Boleh Guna Offline · Privasi Terjamin',
-      gate_invalid: 'Kod akses tidak sah. Sila semak semula kod daripada pentadbir.',
+      gate_invalid: 'Kod akses tidak sah. Sila semak kod anda atau klik "Daftar Percuma (Auto)".',
       app_sub: 'Meja Nota Guru',
       new_note: 'Nota Baharu',
       folders_heading: 'Folder',
@@ -171,10 +193,21 @@
     btnSharePrint: document.getElementById('btn-share-print'),
 
     gateScreen: document.getElementById('gate-screen'),
+    tabUnlock: document.getElementById('tab-unlock'),
+    tabRegister: document.getElementById('tab-register'),
     gateForm: document.getElementById('gate-form'),
     codeInput: document.getElementById('access-code-input'),
     gateError: document.getElementById('gate-error'),
     gateLangBtn: document.getElementById('gate-lang-btn'),
+    registerForm: document.getElementById('register-form'),
+    regName: document.getElementById('reg-name'),
+    regSchool: document.getElementById('reg-school'),
+    regEmail: document.getElementById('reg-email'),
+    regError: document.getElementById('reg-error'),
+    regResult: document.getElementById('reg-result'),
+    regGeneratedCode: document.getElementById('reg-generated-code'),
+    btnCopyCode: document.getElementById('btn-copy-code'),
+    btnEnterNow: document.getElementById('btn-enter-now'),
 
     appShell: document.getElementById('app-shell'),
     sidebar: document.getElementById('sidebar'),
@@ -226,6 +259,40 @@
     return Array.from(new Uint8Array(hashBuf))
       .map((b) => b.toString(16).padStart(2, '0'))
       .join('');
+  }
+
+  async function generatePersonalCode(email) {
+    const norm = String(email || '').trim().toLowerCase();
+    const idHash = await sha256Hex(`ID:${norm}:${CODE_SIGN_SALT}`);
+    const part1 = idHash.slice(0, 4).toUpperCase();
+    const sigHash = await sha256Hex(`SIG:${part1}:${CODE_SIGN_SALT}`);
+    const part2 = sigHash.slice(0, 4).toUpperCase();
+    return `CG-${part1}-${part2}`;
+  }
+
+  async function isValidAccessCode(rawCode) {
+    const code = String(rawCode || '').trim().toUpperCase();
+    if (!code) return false;
+    const hash = await sha256Hex(code);
+    if (VALID_CODE_HASHES.has(hash)) return true;
+
+    const m = code.match(/^CG-([0-9A-F]{4})-([0-9A-F]{4})$/);
+    if (!m) return false;
+    const expected = (await sha256Hex(`SIG:${m[1]}:${CODE_SIGN_SALT}`)).slice(0, 4).toUpperCase();
+    return m[2] === expected;
+  }
+
+  function applyTeacherProfile() {
+    const sub = document.querySelector('#app-shell .brand-sub');
+    if (!sub) return;
+    try {
+      const saved = JSON.parse(localStorage.getItem(STORAGE_PROFILE) || 'null');
+      if (saved && saved.name) {
+        sub.textContent = saved.school ? `${saved.name} · ${saved.school}` : saved.name;
+      }
+    } catch (_err) {
+      // keep default subtitle
+    }
   }
 
   function applyLanguage() {
@@ -515,30 +582,46 @@
     els.appShell.hidden = false;
     loadNotes();
     applyLanguage();
+    applyTeacherProfile();
     renderEditor();
+  }
+
+  function switchGateTab(mode) {
+    const isReg = mode === 'register';
+    els.tabUnlock.classList.toggle('active', !isReg);
+    els.tabRegister.classList.toggle('active', isReg);
+    els.tabUnlock.setAttribute('aria-selected', String(!isReg));
+    els.tabRegister.setAttribute('aria-selected', String(isReg));
+    els.gateForm.hidden = isReg;
+    els.registerForm.hidden = !isReg;
+    els.regResult.hidden = true;
+    els.gateError.hidden = true;
+    els.regError.hidden = true;
   }
 
   function showGate() {
     els.appShell.hidden = true;
     els.gateScreen.hidden = false;
     applyLanguage();
+    switchGateTab('unlock');
     els.codeInput.value = '';
-    els.gateError.hidden = true;
     els.codeInput.focus();
   }
 
   // Event Listeners
   els.gateLangBtn.addEventListener('click', toggleLanguage);
   els.appLangBtn.addEventListener('click', toggleLanguage);
+  els.tabUnlock.addEventListener('click', () => switchGateTab('unlock'));
+  els.tabRegister.addEventListener('click', () => switchGateTab('register'));
 
   els.gateForm.addEventListener('submit', async (e) => {
     e.preventDefault();
     const raw = (els.codeInput.value || '').trim().toUpperCase();
     if (!raw) return;
     try {
-      const hash = await sha256Hex(raw);
-      if (VALID_CODE_HASHES.has(hash)) {
-        localStorage.setItem(STORAGE_AUTH, hash);
+      const ok = await isValidAccessCode(raw);
+      if (ok) {
+        localStorage.setItem(STORAGE_AUTH, raw);
         els.gateError.hidden = true;
         openWorkspace();
         showToast(state.lang === 'bm' ? 'Selamat datang, Cikgu!' : 'Welcome back, Cikgu!');
@@ -550,6 +633,44 @@
       els.gateError.textContent = 'Browser crypto unavailable. Please open via HTTPS.';
       els.gateError.hidden = false;
     }
+  });
+
+  let pendingGeneratedCode = '';
+
+  els.registerForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const name = (els.regName.value || '').trim();
+    const school = (els.regSchool.value || '').trim();
+    const email = (els.regEmail.value || '').trim().toLowerCase();
+    if (!name || !school || !email.includes('@')) {
+      els.regError.textContent = state.lang === 'bm'
+        ? 'Sila lengkapkan nama, sekolah, dan emel yang sah.'
+        : 'Please enter your name, school, and a valid email.';
+      els.regError.hidden = false;
+      return;
+    }
+    els.regError.hidden = true;
+    pendingGeneratedCode = await generatePersonalCode(email);
+    localStorage.setItem(STORAGE_PROFILE, JSON.stringify({ name, school, email }));
+    localStorage.setItem(STORAGE_AUTH, pendingGeneratedCode);
+    els.regGeneratedCode.textContent = pendingGeneratedCode;
+    els.registerForm.hidden = true;
+    els.regResult.hidden = false;
+  });
+
+  els.btnCopyCode.addEventListener('click', async () => {
+    if (!pendingGeneratedCode) return;
+    try {
+      await navigator.clipboard.writeText(pendingGeneratedCode);
+      showToast(state.lang === 'bm' ? 'Kod disalin!' : 'Code copied!');
+    } catch (_err) {
+      window.prompt('Copy your personal code:', pendingGeneratedCode);
+    }
+  });
+
+  els.btnEnterNow.addEventListener('click', () => {
+    openWorkspace();
+    showToast(state.lang === 'bm' ? 'Selamat datang ke CikguNote!' : 'Welcome to CikguNote!');
   });
 
   els.btnLock.addEventListener('click', () => {
@@ -691,12 +812,13 @@
   });
 
   // Boot
-  if (!checkShareHash()) {
+  (async function boot() {
+    if (checkShareHash()) return;
     const savedAuth = localStorage.getItem(STORAGE_AUTH);
-    if (savedAuth && VALID_CODE_HASHES.has(savedAuth)) {
+    if (savedAuth && (VALID_CODE_HASHES.has(savedAuth) || (await isValidAccessCode(savedAuth)))) {
       openWorkspace();
     } else {
       showGate();
     }
-  }
+  })();
 })();

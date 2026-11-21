@@ -225,9 +225,95 @@ html, body {
 }
 
 .gate-desc {
-  margin: 0 0 22px;
+  margin: 0 0 18px;
   color: var(--ink-soft);
   font-size: 14px;
+}
+
+.gate-tabs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+  background: var(--sidebar-bg);
+  padding: 4px;
+  border-radius: 9px;
+  margin-bottom: 18px;
+}
+
+.gate-tab {
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--ink-soft);
+  cursor: pointer;
+}
+
+.gate-tab.active {
+  background: var(--paper-pure);
+  color: var(--green);
+  box-shadow: 0 1px 4px rgba(31, 36, 33, 0.08);
+}
+
+.text-input {
+  width: 100%;
+  font-family: inherit;
+  font-size: 14px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--border-strong);
+  background: var(--paper);
+  color: var(--ink);
+  margin-bottom: 12px;
+}
+
+.text-input:focus {
+  outline: 2px solid var(--green);
+  outline-offset: 1px;
+  background: var(--paper-pure);
+}
+
+.reg-result {
+  text-align: center;
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--green-tint);
+  border: 1px solid rgba(31, 92, 71, 0.25);
+}
+
+.reg-result-label {
+  margin: 0 0 8px;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--green);
+}
+
+.generated-code-box {
+  font-family: var(--font-mono);
+  font-size: 20px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--ink);
+  background: var(--paper-pure);
+  border: 1px dashed var(--green);
+  border-radius: 8px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+}
+
+.small-note {
+  margin: 0 0 12px;
+  font-size: 12px;
+}
+
+.reg-result-actions {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
 .field-label {

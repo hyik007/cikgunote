@@ -46,22 +46,54 @@
 
       <h1 class="gate-heading" data-i18n="gate_title">Welcome back, Cikgu.</h1>
       <p class="gate-desc" data-i18n="gate_desc">
-        Enter your exclusive teacher access code to open your private RPH, PBD, and classroom notebook. All notes stay 100% private on your device.
+        Enter your exclusive access code, or register automatically below to receive your personal code in 5 seconds.
       </p>
 
+      <div class="gate-tabs" role="tablist">
+        <button id="tab-unlock" class="gate-tab active" type="button" role="tab" aria-selected="true" data-i18n="tab_unlock">I Have a Code</button>
+        <button id="tab-register" class="gate-tab" type="button" role="tab" aria-selected="false" data-i18n="tab_register">Get Free Code (Auto)</button>
+      </div>
+
+      <!-- TAB 1: UNLOCK WITH CODE -->
       <form id="gate-form" class="gate-form" autocomplete="off">
         <label for="access-code-input" class="field-label" data-i18n="gate_label">Teacher Access Code</label>
         <input
           id="access-code-input"
           class="code-input"
           type="text"
-          placeholder="e.g. CIKGU-2026"
+          placeholder="e.g. CIKGU-2026 or CG-XXXX-XXXX"
           required
           autofocus
         />
         <p id="gate-error" class="gate-error" role="alert" hidden></p>
         <button class="btn btn-primary btn-full" type="submit" data-i18n="gate_btn">Unlock My Desk</button>
       </form>
+
+      <!-- TAB 2: AUTOMATIC INSTANT TEACHER REGISTRATION -->
+      <form id="register-form" class="gate-form" autocomplete="off" hidden>
+        <label for="reg-name" class="field-label" data-i18n="reg_name_label">Teacher Name</label>
+        <input id="reg-name" class="text-input" type="text" placeholder="e.g. Cikgu Aisyah" required />
+
+        <label for="reg-school" class="field-label" data-i18n="reg_school_label">School / Institution</label>
+        <input id="reg-school" class="text-input" type="text" placeholder="e.g. SK Taman Desa / SMK Damansara" required />
+
+        <label for="reg-email" class="field-label" data-i18n="reg_email_label">MOE / School Email (DELIMa or Gmail)</label>
+        <input id="reg-email" class="text-input" type="email" placeholder="e.g. g-12345678@moe-dl.edu.my" required />
+
+        <p id="reg-error" class="gate-error" role="alert" hidden></p>
+        <button class="btn btn-primary btn-full" type="submit" data-i18n="reg_btn">Generate My Personal Code</button>
+      </form>
+
+      <!-- AUTO-GENERATED CODE CONFIRMATION -->
+      <div id="reg-result" class="reg-result" hidden>
+        <p class="reg-result-label" data-i18n="reg_ready">Your personal teacher code is ready:</p>
+        <div id="reg-generated-code" class="generated-code-box">CG-0000-0000</div>
+        <p class="muted small-note" data-i18n="reg_save_tip">Save this code — you can use it anytime on any browser.</p>
+        <div class="reg-result-actions">
+          <button id="btn-copy-code" class="btn btn-secondary btn-sm" type="button" data-i18n="copy_code">Copy Code</button>
+          <button id="btn-enter-now" class="btn btn-primary btn-sm" type="button" data-i18n="enter_desk">Open My Desk →</button>
+        </div>
+      </div>
 
       <div class="gate-footer">
         <span data-i18n="gate_note">100% Free · Works Offline · Private to Your Browser</span>
