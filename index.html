@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CikguNote — Private Notes &amp; RPH Desk for Malaysian Teachers</title>
+  <meta name="description" content="A calm, free, private notes & RPH workspace built for Malaysian teachers. Works offline, prints cleanly to A4, and unlocks via exclusive teacher access code." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,500;0,6..72,600;1,6..72,400&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+</head>
+<body>
+  <!-- SHARED READ-ONLY NOTE VIEWER (for #share= links sent to students/colleagues) -->
+  <div id="share-view" class="share-shell" hidden>
+    <div class="share-paper">
+      <div class="share-topbar">
+        <span class="brand-mark">CikguNote</span>
+        <div class="share-actions">
+          <button id="btn-share-print" class="btn btn-secondary btn-sm" type="button">Print / PDF</button>
+          <a href="./" class="btn btn-primary btn-sm">Open CikguNote</a>
+        </div>
+      </div>
+      <div class="share-meta">
+        <span id="share-folder" class="tag-pill"></span>
+        <span id="share-date" class="muted"></span>
+      </div>
+      <h1 id="share-title" class="share-title"></h1>
+      <div id="share-body" class="share-body"></div>
+    </div>
+  </div>
+
+  <!-- EXCLUSIVE ACCESS CODE GATE -->
+  <div id="gate-screen" class="gate-shell" hidden>
+    <div class="gate-card">
+      <div class="gate-top">
+        <div class="brand-lockup">
+          <span class="brand-emblem" aria-hidden="true">CN</span>
+          <div>
+            <strong class="brand-name">CikguNote</strong>
+            <span class="brand-sub" data-i18n="gate_sub">Ruang Nota Guru Malaysia</span>
+          </div>
+        </div>
+        <button id="gate-lang-btn" class="lang-toggle" type="button" aria-label="Switch language">BM / EN</button>
+      </div>
+
+      <h1 class="gate-heading" data-i18n="gate_title">Welcome back, Cikgu.</h1>
+      <p class="gate-desc" data-i18n="gate_desc">
+        Enter your exclusive teacher access code to open your private RPH, PBD, and classroom notebook. All notes stay 100% private on your device.
+      </p>
+
+      <form id="gate-form" class="gate-form" autocomplete="off">
+        <label for="access-code-input" class="field-label" data-i18n="gate_label">Teacher Access Code</label>
+        <input
+          id="access-code-input"
+          class="code-input"
+          type="text"
+          placeholder="e.g. CIKGU-2026"
+          required
+          autofocus
+        />
+        <p id="gate-error" class="gate-error" role="alert" hidden></p>
+        <button class="btn btn-primary btn-full" type="submit" data-i18n="gate_btn">Unlock My Desk</button>
+      </form>
+
+      <div class="gate-footer">
+        <span data-i18n="gate_note">100% Free · Works Offline · Private to Your Browser</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- MAIN WORKSPACE -->
+  <div id="app-shell" class="app-shell" hidden>
+    <aside id="sidebar" class="sidebar" aria-label="Folders and tools">
+      <div class="sidebar-header">
+        <div class="brand-lockup">
+          <span class="brand-emblem" aria-hidden="true">CN</span>
+          <div>
+            <strong class="brand-name">CikguNote</strong>
+            <span class="brand-sub" data-i18n="app_sub">Teacher's Desk</span>
+          </div>
+        </div>
+        <button id="btn-close-sidebar" class="icon-btn mobile-only" type="button" aria-label="Close menu">✕</button>
+      </div>
+
+      <button id="btn-new-note" class="btn btn-primary btn-full" type="button">
+        + <span data-i18n="new_note">New Note</span>
+      </button>
+
+      <div class="sidebar-section">
+        <div class="section-label" data-i18n="folders_heading">Folders</div>
+        <nav id="folder-nav" class="folder-nav"></nav>
+      </div>
+
+      <div class="sidebar-section">
+        <div class="section-label" data-i18n="templates_heading">Quick Templates</div>
+        <div class="template-list">
+          <button class="template-btn" data-template="rph" type="button">
+            <span class="tpl-dot dot-green"></span>
+            <span data-i18n="tpl_rph">RPH (KSSR / KSSM)</span>
+          </button>
+          <button class="template-btn" data-template="pbd" type="button">
+            <span class="tpl-dot dot-amber"></span>
+            <span data-i18n="tpl_pbd">PBD Checklist (TP1–TP6)</span>
+          </button>
+          <button class="template-btn" data-template="meeting" type="button">
+            <span class="tpl-dot dot-slate"></span>
+            <span data-i18n="tpl_meeting">Minit Mesyuarat</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <div class="footer-row">
+          <button id="btn-backup" class="btn btn-ghost btn-sm" type="button" data-i18n="backup">Backup</button>
+          <button id="btn-restore" class="btn btn-ghost btn-sm" type="button" data-i18n="restore">Restore</button>
+          <input id="restore-input" type="file" accept=".json" hidden />
+        </div>
+        <div class="footer-row">
+          <button id="app-lang-btn" class="lang-toggle" type="button">BM / EN</button>
+          <button id="btn-lock" class="btn btn-ghost btn-sm" type="button" data-i18n="lock">Lock Desk</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- MIDDLE COLUMN: NOTE LIST -->
+    <section class="notes-pane" aria-label="Notes list">
+      <div class="notes-topbar">
+        <button id="btn-open-sidebar" class="icon-btn mobile-only" type="button" aria-label="Open menu">☰</button>
+        <div class="search-wrap">
+          <input
+            id="search-input"
+            class="search-input"
+            type="search"
+            placeholder="Search notes, subjects, kelas..."
+            aria-label="Search notes"
+          />
+        </div>
+      </div>
+
+      <div class="notes-subheader">
+        <strong id="active-folder-title">All Notes</strong>
+        <span id="notes-count" class="muted">0</span>
+      </div>
+
+      <div id="notes-list" class="notes-list" role="listbox" aria-label="Notes"></div>
+    </section>
+
+    <!-- RIGHT COLUMN: EDITOR PAPER -->
+    <main class="editor-pane" aria-label="Note editor">
+      <div id="editor-empty" class="editor-empty" hidden>
+        <p class="empty-title" data-i18n="empty_title">Select a note or start a fresh page.</p>
+        <p class="muted" data-i18n="empty_desc">Use the RPH or PBD templates on the left to save time preparing lessons.</p>
+        <button id="btn-empty-new" class="btn btn-primary" type="button">+ <span data-i18n="new_note">New Note</span></button>
+      </div>
+
+      <div id="editor-wrap" class="editor-wrap">
+        <div class="editor-toolbar">
+          <div class="toolbar-left">
+            <select id="note-folder-select" class="select-control" aria-label="Folder">
+              <option value="rph">RPH / Lesson Plan</option>
+              <option value="exam">Exam &amp; PBD</option>
+              <option value="student">Student Notes</option>
+              <option value="meeting">Meeting / Mesyuarat</option>
+              <option value="scratch">Scratchpad</option>
+            </select>
+            <input id="note-class-input" class="meta-input" type="text" placeholder="Class (e.g. 4 Bestari)" aria-label="Class or Subject" />
+            <button id="btn-pin" class="icon-pill" type="button" title="Pin to top">Pin</button>
+          </div>
+          <div class="toolbar-right">
+            <button id="btn-checklist" class="btn btn-ghost btn-sm" type="button" title="Insert checklist item">☑ Checklist</button>
+            <button id="btn-share" class="btn btn-ghost btn-sm" type="button" title="Copy read-only share link">Share Link</button>
+            <button id="btn-print" class="btn btn-ghost btn-sm" type="button" title="Print or Save as A4 PDF">Print / PDF</button>
+            <button id="btn-export-txt" class="btn btn-ghost btn-sm" type="button" title="Download as text file">Export</button>
+            <button id="btn-delete" class="btn btn-danger-ghost btn-sm" type="button" title="Delete note">Delete</button>
+          </div>
+        </div>
+
+        <article class="paper-sheet">
+          <div class="paper-meta-row">
+            <span id="note-updated" class="mono muted">Saved</span>
+            <span id="note-words" class="mono muted">0 words</span>
+          </div>
+          <input
+            id="note-title"
+            class="paper-title"
+            type="text"
+            placeholder="Untitled Note..."
+            aria-label="Note title"
+          />
+          <textarea
+            id="note-body"
+            class="paper-body"
+            placeholder="Start writing your RPH, teaching notes, or class reminders here..."
+            aria-label="Note content"
+          ></textarea>
+        </article>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
